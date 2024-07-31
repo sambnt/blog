@@ -1,0 +1,178 @@
+#+STARTUP: inlineimages
+* Build Systems
+
+What are we doing when we compile code?
+
+Assume we have a simple C++ program:
+
+#+NAME: simple-cpp
+#+BEGIN_SRC cpp :tangle simple.cpp
+#include <iostream>
+
+int main() {
+    std::cout << "Hello World!";
+    return 0;
+}
+#+END_SRC
+
+This file describes our program, but it cannot be executed by the computer.
+
+In order to make our program executable, we need to compile it.
+
+Compilation will translate our high-level description of the program into a lower-level language that can be executed by the computer (such as machine code):
+
+#+BEGIN_SRC sh :tangle script.sh
+g++ simple.cpp -o simple
+chmod +x simple
+./simple
+#+END_SRC
+
+#+RESULTS:
+: Hello World!
+
+#+begin_src mermaid :file test.png
+flowchart LR
+    A["simple.cpp"] --> B["compile (g++)"]
+    B --> C["executable"]
+    style B fill:#FFD600,stroke:#FFD600
+#+end_src
+
+#+RESULTS:
+[[file:test.png]]
+
+** Dependencies
+
+Depending on external code is more complicated.
+
+#+NAME: sdl-cpp
+#+BEGIN_SRC cpp :tangle sdl.cpp
+#include <SDL2/SDL.h>
+
+int main(int argc, char *argv[])
+{
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    SDL_Surface *surface;
+    SDL_Event event;
+
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        printf("error initializing SDL: %s\n", SDL_GetError());
+    }
+
+    SDL_CreateWindowAndRenderer(320, 240, SDL_WINDOW_RESIZABLE, &window, &renderer);
+
+    while (1) {
+        SDL_PollEvent(&event);
+        if (event.type == SDL_QUIT) {
+            break;
+        }
+        SDL_SetRenderDrawColor(renderer, 0x00, 0xaa, 0x00, 0x00);
+        SDL_RenderClear(renderer);
+        SDL_RenderPresent(renderer);
+    }
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+
+    SDL_Quit();
+
+
+    return 0;
+}
+#+END_SRC
+
+If we try to compile this as before:
+
+#+BEGIN_SRC sh
+g++ sdl.cpp -o sdl
+#+END_SRC
+
+We are told g++ can't find the SDL header:
+
+#+BEGIN_SRC sh
+sdl.cpp:1:10: fatal error: SDL2/SDL.h: No such file or directory
+    1 | #include <SDL2/SDL.h>
+      |          ^~~~~~~~~~~~
+compilation terminated.
+#+END_SRC
+
+We can tell g++ where to find the SDL2 headers by using the "-I" flag:
+
+#+BEGIN_SRC sh
+g++ sdl.cpp -I "${SDL_INCLUDE_DIR}" -o sdl
+#+END_SRC
+
+We get a little further, but fail in the linking stage:
+
+#+BEGIN_SRC sh
+ld: /tmp/cczqQCRr.o: in function `main':
+sdl.cpp:(.text.startup+0xa): undefined reference to `SDL_Init'
+/nix/store/7v7g86ml0ri171gfcrs1d442px5bi1p3-binutils-2.41/bin/ld: sdl.cpp:(.text.startup+0x32): undefined reference to `SDL_CreateWindow'
+/nix/store/7v7g86ml0ri171gfcrs1d442px5bi1p3-binutils-2.41/bin/ld: sdl.cpp:(.text.startup+0x39): undefined reference to `SDL_GetError'
+collect2: error: ld returned 1 exit status
+#+END_SRC
+
+We must also tell g++ where to search for the library files with the "-L" flag:
+
+#+BEGIN_SRC sh
+g++ sdl.cpp -I "${SDL_INCLUDE_DIR}" -L "${SDL_LIB_DIR}" -o sdl
+#+END_SRC
+
+However, this isn't enough:
+
+#+BEGIN_SRC sh
+ld: /tmp/ccoSEfP2.o: in function `main':
+sdl.cpp:(.text.startup+0x1b): undefined reference to `SDL_Init'
+#+END_SRC
+
+In addition to telling the compiler where to look, we also need to tell it what library to link with the "-l" flag:
+
+#+BEGIN_SRC sh :tangle script.sh
+g++ sdl.cpp -I "${SDL_INCLUDE_DIR}" -L "${SDL_LIB_DIR}" -l SDL2 -o sdl
+#+END_SRC
+
+** Dynamic and Static Linking
+
+Library files come in a few flavours, and to understand them we need to understand the difference between dynamic and static linking.
+
+If you were to write some code that won't change often, you might want to pre-compile that code into a binary. When you compile your code, you link to this binary, and it includes it in the linking step. This is known as static linking.
+
+You might further decide that instead of compiling the binary into the final product each compile step, you would like to dynamically link to the binary on program startup. This is known as dynamic linking.
+
+When a program is executed, the system will use a dynamic linker to discover and link dynamically linked libraries.
+
+** Bonus
+
+You might've noticed that when we first invoked g++, we didn't tell it where to find "<iostream>". How did g++ know where to find it?
+
+g++ is configured to look in a few places by default, and core libraries are typically bundled with g++.
+
+You can view the places g++ is looking with this command:
+
+#+BEGIN_SRC sh :tangle script.sh :results verbatim
+echo | g++ -x c++ -E -Wp,-v - 2>&1 >/dev/null
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+#include "..." search starts here:
+#include <...> search starts here:
+ /nix/store/llmjvk4i2yncv8xqdvs4382wr3kgdmvp-gcc-13.2.0/include/c++/13.2.0/
+ /nix/store/llmjvk4i2yncv8xqdvs4382wr3kgdmvp-gcc-13.2.0/include/c++/13.2.0//x86_64-unknown-linux-gnu
+ /nix/store/llmjvk4i2yncv8xqdvs4382wr3kgdmvp-gcc-13.2.0/include/c++/13.2.0//backward
+ /nix/store/llmjvk4i2yncv8xqdvs4382wr3kgdmvp-gcc-13.2.0/lib/gcc/x86_64-unknown-linux-gnu/13.2.0/include
+ /nix/store/llmjvk4i2yncv8xqdvs4382wr3kgdmvp-gcc-13.2.0/include
+ /nix/store/llmjvk4i2yncv8xqdvs4382wr3kgdmvp-gcc-13.2.0/lib/gcc/x86_64-unknown-linux-gnu/13.2.0/include-fixed
+ /nix/store/0c5jp9d9h9818arr6s21xibgjl1ybql0-glibc-2.39-52-dev/include
+End of search list.
+#+end_example
+
+Credit to https://stackoverflow.com/a/66830218.
+
+Linker:
+
+#+BEGIN_SRC sh :tangle script.sh :results verbatim
+ld --verbose | grep SEARCH_DIR | tr -s ' ;' \\012
+#+END_SRC
+
+#+RESULTS:
