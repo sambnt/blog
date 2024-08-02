@@ -1,0 +1,16 @@
+# No subscript, exports our RESULTS
+#+OPTIONS: ^:nil d:t
+
+* Package Management
+
+CMake is a great tool for capturing build instructions for a project.
+
+CMake won't help you find and install the right versions of your dependencies.
+
+A package manager can provide a declarative (version-controllbale) way for you to specify you project dependencies, along with their exact versions, which is used by the package manager to find the appropriate version for you platform and architecture, and even tell CMake about it.
+
+A decent first approach would be to download your dependencies manually, tell your teammates exactly which versions to download, and point CMake to find them in the correct place.
+
+I recommend Nix. Nix runs under Linux, Mac and Windows (WSL), and contains expressions for finding and building hundreds of thousands of packages.
+
+For our SDL2 project, a typical

@@ -1,0 +1,10 @@
+# No subscript, exports our RESULTS
+#+OPTIONS: ^:nil d:t
+
+* Package Management
+
+It's likely that if you were following along, you would have encountered issues with CMake being able to find SDL2.
+
+CMake has some "magic" around finding packages, but is not all-knowing.
+
+We still have to direct

@@ -26,7 +26,7 @@
         default = pkgs.mkShell {
           SDL_INCLUDE_DIR = "${pkgs.SDL2.dev}/include";
           SDL_LIB_DIR = "${pkgs.SDL2}/lib";
-          buildInputs = [ pkgs.gcc pkgs.mermaid-cli pkgs.cmake ];
+          buildInputs = [ pkgs.gcc pkgs.mermaid-cli pkgs.cmake pkgs.SDL2.dev pkgs.SDL2 ];
         };
       });
     };
