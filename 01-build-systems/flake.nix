@@ -3,10 +3,9 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, ... }@inputs:
     let
       inherit (nixpkgs) lib;
 
@@ -27,7 +26,7 @@
         default = pkgs.mkShell {
           SDL_INCLUDE_DIR = "${pkgs.SDL2.dev}/include";
           SDL_LIB_DIR = "${pkgs.SDL2}/lib";
-          buildInputs = [ pkgs.gcc pkgs.mermaid-cli ];
+          buildInputs = [ pkgs.gcc pkgs.mermaid-cli pkgs.cmake ];
         };
       });
     };

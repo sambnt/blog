@@ -1,16 +1,21 @@
 #+STARTUP: inlineimages
 * Build Systems
 
+#+BEGIN_SRC sh :tangle script.sh :exports none
+#!/usr/bin/env bash
+#+END_SRC
+
 What are we doing when we compile code?
 
 Assume we have a simple C++ program:
 
 #+NAME: simple-cpp
 #+BEGIN_SRC cpp :tangle simple.cpp
-#include <iostream>
+#include <stdio.h>
 
 int main() {
-    std::cout << "Hello World!";
+    printf("Hello World!");
+
     return 0;
 }
 #+END_SRC
@@ -30,7 +35,7 @@ chmod +x simple
 #+RESULTS:
 : Hello World!
 
-#+begin_src mermaid :file test.png
+#+begin_src mermaid :file test.png :exports result
 flowchart LR
     A["simple.cpp"] --> B["compile (g++)"]
     B --> C["executable"]
@@ -128,8 +133,9 @@ sdl.cpp:(.text.startup+0x1b): undefined reference to `SDL_Init'
 In addition to telling the compiler where to look, we also need to tell it what library to link with the "-l" flag:
 
 #+BEGIN_SRC sh :tangle script.sh
-g++ sdl.cpp -I "${SDL_INCLUDE_DIR}" -L "${SDL_LIB_DIR}" -l SDL2 -o sdl
+g++ sdl.cpp -I "${SDL_INCLUDE_DIR}" -L "${SDL_LIB_DIR}" -lSDL2 -o sdl
 #+END_SRC
+
 
 ** Dynamic and Static Linking
 

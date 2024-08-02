@@ -1,0 +1,61 @@
+# No subscript, exports our RESULTS
+#+OPTIONS: ^:nil d:t
+
+* Build Systems
+
+It is rare that you will invoke the compiler directly.
+
+Typically we make use of a build system or Integrated Development Environment (IDE) to build your project.
+
+The core concepts are the same in any case, and you will always need to tell your compiler:
+  - Where to find header files such as "SDL.h"
+  - Where to find object files (libraries)
+  - Which object files to link
+
+The way in which you do so varies from tool to tool.
+
+Because the needs of each build system or IDE are so similar, you can use a tool called CMake to capture the above information in a text file, and generate project files for many different tools from that.
+
+Given our simple SDL example from the last post. A minimal CMakeLists.txt file would look like:
+
+#+begin_src cmake
+# Create a named project
+project(simple)
+
+# Collect all of our header and implementation files with a GLOB.
+FILE(GLOB SIMPLE_LIB_H "*.h")
+FILE(GLOB SIMPLE_LIB_C "*.c")
+
+# Package our implementation files into a library.
+add_library(simple-lib ${SIMPLE_LIB_C})
+
+# Add an executable, using simple.c as the entry point
+add_executable(simple-exe simple.c)
+
+# Find the location of our dependencies
+find_package(SDL2 REQUIRED)
+
+# Tell the compiler which libraries to link
+target_link_libraries(simple PUBLIC
+                      simple-lib
+                      "${SDL2_LIBRARY}"
+                     )
+
+# Tell the compiler where to find our header files
+target_include_directories(shays-world PUBLIC
+                           "${PROJECT_SOURCE_DIR}/simple-lib"
+                           "${SDL_INCLUDE_DIR}"
+                          )
+
+# Output our executable to the "bin" folder
+install(TARGETS simple-exe DESTINATION bin)
+# Output our library files to the "lib" folder
+install(TARGETS simple-lib DESTINATION lib)
+# Output our library headers to the "include" folder
+install(FILES ${SIMPLE_LIB_H} DESTINATION include)
+#+end_src
+
+We can now invoke CMake to produce project files for our IDE, such as Codeblocks:
+
+#+begin_src sh
+#+end_src

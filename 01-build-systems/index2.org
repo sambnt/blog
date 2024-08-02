@@ -1,0 +1,111 @@
+# No subscript, exports our RESULTS
+#+OPTIONS: ^:nil d:t
+* Finding Files
+
+Recall the four stages of the compiler:
+  1. Preprocess
+  2. Compile
+  3. Assemble
+  4. Link
+
+There are two stages at which we need to help the compiler find files:
+  - Preprocess:
+    - Tell the preprocessor where to find ~#include~ files.
+  - Link:
+    - Tell the linker where to find object files.
+
+Consider a simple SDL program:
+
+#+NAME: sdl-c
+#+BEGIN_SRC c :tangle sdl.c
+#include <SDL2/SDL.h>
+
+int main(int argc, char *argv[])
+{
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    SDL_Surface *surface;
+    SDL_Event event;
+
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        printf("error initializing SDL: %s\n", SDL_GetError());
+    }
+
+    SDL_CreateWindowAndRenderer(320, 240, SDL_WINDOW_RESIZABLE, &window, &renderer);
+
+    while (1) {
+        SDL_PollEvent(&event);
+        if (event.type == SDL_QUIT) {
+            break;
+        }
+        SDL_SetRenderDrawColor(renderer, 0x00, 0xaa, 0x00, 0x00);
+        SDL_RenderClear(renderer);
+        SDL_RenderPresent(renderer);
+    }
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+
+    SDL_Quit();
+
+
+    return 0;
+}
+#+END_SRC
+
+** Preprocess
+
+When the preprocessor "#include"s a file, it dumps the contents of that file directly into the source code. In our example, the preprocessor will dump the contents of "SDL2/SDL.h" into the source file.
+
+In order to do that, it needs to know where to find "SDL2/SDL.h"!
+
+The preprocessor will first search folders we've specified with the "-I" command line option. It will then look in a few "standard" places, where it will typically find the standard library headers such as "stdio.h".
+
+We can tell the compiler where to find the SDL2 headers with the "-I" flag:
+
+#+BEGIN_SRC sh
+gcc -I "${SDL_INCLUDE_DIR}" sdl.c -o sdl
+#+END_SRC
+
+** Link
+
+After the compilation stage, our program will be full of unresolved references to external symbols (like ~SDL_Init~, and ~SDL_RenderPresent~).
+
+Recall the following diagram:
+
+[[file:placeholder.png]]
+
+In order for the linker to find the correct object file to resolve those SDL2 references, we need to tell it where to look with the "-L" flag:
+
+#+BEGIN_SRC sh
+gcc -L "${SDL_LIB_DIR}" -I "${SDL_INCLUDE_DIR}" sdl.c -o sdl
+#+END_SRC
+
+The ~${SDL_LIB_DIR}~ has many libraries in it:
+
+#+BEGIN_SRC sh :exports results :results verbatim
+tree "${SDL_LIB_DIR}"
+#+END_SRC
+
+#+RESULTS:
+: /nix/store/i6kf25g918pjk18f7v6d5cp3zmmflzav-SDL2-2.30.2/lib
+: ├── libSDL2-2.0.so.0 -> libSDL2-2.0.so.0.3000.2
+: ├── libSDL2-2.0.so.0.3000.2
+: ├── libSDL2.la
+: ├── libSDL2main.la
+: ├── libSDL2.so -> libSDL2-2.0.so.0.3000.2
+: └── libSDL2_test.la
+:
+: 1 directory, 6 files
+
+So, we also need to tell the linker which specific object file to use with the "-l" flag:
+
+#+BEGIN_SRC sh
+gcc -lSDL2 -L "${SDL_LIB_DIR}" -I "${SDL_INCLUDE_DIR}" sdl.c -o sdl
+#+END_SRC
+
+Note how we didn't specify the prefix "lib", nor the suffix ".so"/".la". The exact name of the library can vary by platform, and the linker is smart enough to resolve this for us.
+
+With this, we get a working SDL2 executable:
+
+[[file:green.png]]
