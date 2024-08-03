@@ -36,8 +36,7 @@ jobs:
       - uses: cachix/install-nix-action@v25
       - name: build
         run: |
-          nix develop
-          ./build.sh
+          nix develop --command "./build.sh"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
