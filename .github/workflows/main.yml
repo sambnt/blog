@@ -1,0 +1,22 @@
+name: Deploy Site
+
+# Controls when the action will run. Invokes the workflow on push events but only for the main branch
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v25
+      - name: build
+        run: |
+          nix develop
+          ./build.sh

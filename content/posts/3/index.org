@@ -1,0 +1,140 @@
+# No subscript, exports our RESULTS
+#+OPTIONS: ^:nil d:t
+
+#+BEGIN_SRC emacs-lisp :exports results :results silent
+  (direnv-update-environment)
+  (org-babel-tangle)
+#+END_SRC
+
+* Build Systems
+
+It is rare that you will invoke the compiler directly.
+
+Typically we make use of a build system or Integrated Development Environment (IDE) to build your project.
+
+The core concepts are the same in any case, and you will always need to tell your compiler:
+  - Where to find header files such as "SDL.h"
+  - Where to find object files (libraries)
+  - Which object files to link
+
+The way in which you do so varies from tool to tool.
+
+Because the needs of each build system or IDE are so similar, you can use a tool called CMake to capture the above information in a text file, and generate project files for many different tools from that.
+
+Given our simple SDL example from the last post. A minimal CMakeLists.txt file would look like:
+
+#+begin_src cmake :tangle .generated/CMakeLists.txt
+# Specify minimum CMake version
+cmake_minimum_required(VERSION 3.29)
+
+# Create a named project
+project(simple)
+
+# Collect all of our header and implementation files with a GLOB.
+FILE(GLOB SIMPLE_LIB_H "*.h")
+FILE(GLOB SIMPLE_LIB_C "*.c")
+
+# Package our implementation files into a library.
+add_library(simple-lib ${SIMPLE_LIB_C})
+
+# Add an executable, using sdl.c as the entry point
+add_executable(simple-exe sdl.c)
+
+# Find the location of our dependencies
+find_package(SDL2 REQUIRED)
+
+# Tell the compiler which libraries to link for our executable
+target_link_libraries(simple-exe PUBLIC
+                      simple-lib
+                      "${SDL2_LIBRARIES}"
+                     )
+
+# Tell the compiler where to find our header files
+target_include_directories(simple-exe PUBLIC
+                           "${PROJECT_SOURCE_DIR}/simple-lib"
+                           "${SDL2_INCLUDE_DIRS}"
+                          )
+
+# Output our executable to the "bin" folder
+install(TARGETS simple-exe DESTINATION bin)
+# Output our library files to the "lib" folder
+install(TARGETS simple-lib DESTINATION lib)
+# Output our library headers to the "include" folder
+install(FILES ${SIMPLE_LIB_H} DESTINATION include)
+#+end_src
+
+We can now invoke CMake to produce project files for our IDE, such as Codeblocks.
+
+I recommend creating a separate build directory for all CMake-generated files, and invoking CMake from there. I also recommend not committing this build directory to version control. Each team member should invoke CMake on their system.
+
+#+begin_src sh :results verbatim :exports both :dir .generated
+mkdir build
+cd build
+cmake ../ -G "CodeBlocks - Unix Makefiles"
+#+end_src
+
+This will generate a file called "simple.cbp", that we can open in Codeblocks.
+
+[[file:static/cbp.png]]
+
+Or we can invoke CMake to build the project directly:
+
+#+begin_src sh :results verbatim :exports both :dir .generated
+cd build
+cmake --build ./
+#+end_src
+
+#+RESULTS:
+: [ 25%] Building C object CMakeFiles/simple-lib.dir/sdl.c.o
+: [ 50%] Linking C static library libsimple-lib.a
+: [ 50%] Built target simple-lib
+: [ 75%] Building C object CMakeFiles/simple-exe.dir/sdl.c.o
+: [100%] Linking C executable simple-exe
+: [100%] Built target simple-exe
+
+Which will provide us with an executable named "simple-exe" in the current directory.
+
+You may find that CMake (either during project generation or build) complains that it cannot find SDL2. CMake has some "magic" around finding packages, but is not all knowing.
+
+A "find_package" statement like:
+
+#+begin_src cmake
+find_package(SDL2 REQUIRED)
+#+end_src
+
+Will look for a file named "FindSDL2.cmake" in the ~CMAKE_MODULE_PATH~ environment variable, then among CMake modules that come bundled with CMake.
+
+"FindSDL2.cmake" doesn't come bundled with CMake, and in that case CMake will look for the information in "SDL2Config.cmake" or "sdl2-config.cmake" on the ~CMAKE_PREFIX_PATH~. These files come bundled with SDL2:
+
+#+BEGIN_SRC sh
+SDL2-2.30.6/
+├── BUGS.txt
+├── cmake
+│   ├── sdl2-config.cmake
+│   └── sdl2-config-version.cmake
+├── COPYING.txt
+├── docs
+│   ...
+├── include
+│   ...
+├── lib
+│   ...
+├── README-SDL.txt
+├── README.txt
+└── WhatsNew.txt
+#+END_SRC
+
+So to help CMake find SDL2, we need to add this directory to our ~CMAKE_PREFIX_PATH~ before we invoke CMake:
+
+#+BEGIN_SRC sh
+cd build
+CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:${MY_SDL2_CMAKE_DIR} cmake ../
+cmake --build ./
+#+END_SRC
+
+The benefits of CMake are that it:
+  - Handles platform differences gracefully (Windows, Linux, Mac).
+  - Captures build information in a text file for easier version control.
+  - Is able to "find" packages installed on your system.
+
+CMake has generators for modern IDEs like Visual Studio, and has integrations with Visual Studio Code and many other tools.

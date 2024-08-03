@@ -1,11 +1,17 @@
 # Exports our RESULTS
 #+OPTIONS: d:t
+
+#+BEGIN_SRC emacs-lisp :exports results :results silent
+  (direnv-update-environment)
+  (org-babel-tangle)
+#+END_SRC
+
 * Compilation
 
 Consider a simple C program:
 
 #+NAME: simple-c
-#+BEGIN_SRC c :tangle simple.c
+#+BEGIN_SRC c :tangle .generated/simple.c
 #include <stdio.h>
 
 int main() {
@@ -19,7 +25,7 @@ This file is a high-level description of our program. The computer cannot execut
 
 We use a compiler to produce an executable file from our source file:
 
-#+begin_src mermaid :file high-level.png :exports results
+#+begin_src mermaid :file high-level.png :exports results :dir .generated
 flowchart LR
     A{{"Source File"}}
     B["Compiler"]
@@ -32,7 +38,7 @@ flowchart LR
 #+end_src
 
 #+RESULTS:
-[[file:high-level.png]]
+[[file:.generated/high-level.png]]
 
 The compiler runs (at least) the following phases:
   1. Preprocess
@@ -40,7 +46,7 @@ The compiler runs (at least) the following phases:
   3. Assemble
   4. Link
 
-#+begin_src mermaid :file stages.png :exports results
+#+begin_src mermaid :file stages.png :exports results :dir .generated
 %%{init: {'themeVariables': { 'edgeLabelBackground': 'white'}}}%%
 flowchart TD
     A{{"Source File"}}
@@ -60,7 +66,7 @@ flowchart TD
 #+end_src
 
 #+RESULTS:
-[[file:stages.png]]
+[[file:.generated/stages.png]]
 
 ** Preprocess
 
@@ -85,13 +91,13 @@ The linker takes our object code and "links" it together to resolve any unresolv
 
 We can stop our compiler at the assembly stage to confirm that printf is indeed not present in the code:
 
-#+begin_src sh :results verbatim :wrap src asm :exports results
-g++ -S simple.cpp -o /dev/stdout
+#+begin_src sh :results verbatim :wrap src asm :exports both :dir .generated
+g++ -S simple.c -o /dev/stdout
 #+end_src
 
 #+RESULTS:
 #+begin_src asm
-	.file	"simple.cpp"
+	.file	"simple.c"
 	.text
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .LC0:
@@ -132,7 +138,7 @@ But there is no label to define the *symbol* ~printf~.
 
 It is only at the linking stage that this reference is resolved.
 
-[[file:placeholder.png]]
+[[file:./static/placeholder.png]]
 
 (from https://www.tenouk.com/Bufferoverflowc/Bufferoverflow1c.html).
 
@@ -140,7 +146,7 @@ It is only at the linking stage that this reference is resolved.
 
 When we provide multiple source files, each is compiled to an object file, and these are linked to form the final executable:
 
-#+begin_src mermaid :file multiple.png :exports results
+#+begin_src mermaid :file multiple.png :exports results :dir .generated
 %%{init: {'themeVariables': { 'edgeLabelBackground': 'white'}}}%%
 flowchart LR
     S1{{"Source File"}}
@@ -168,6 +174,6 @@ flowchart LR
 #+end_src
 
 #+RESULTS:
-[[file:multiple.png]]
+[[file:.generated/multiple.png]]
 
 External libraries (like the C standard library, or SDL) are typically provided pre-compiled as ".a" (an (a)rchive of object files), or ".lib" files. These files are ready to be linked into the final executable by the linker.
