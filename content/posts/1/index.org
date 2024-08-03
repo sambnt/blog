@@ -88,7 +88,7 @@ When we reference external symbols (like ~printf~), which aren't declared in our
 
 ** Link
 
-The linker takes our object code and "links" it together to resolve any unresolved symbols. For example, the linker will link our program with the C standard library to resolve ~printf~.
+The linker takes object code and "links" it together to resolve any unresolved symbols. For example, the linker will link our program with the C standard library to resolve ~printf~.
 
 We can stop our compiler at the assembly stage to confirm that printf is indeed not present in the code:
 
@@ -142,8 +142,6 @@ It is only at the linking stage that this reference is resolved.
 [[file:./static/placeholder.png]]
 
 (from https://www.tenouk.com/Bufferoverflowc/Bufferoverflow1c.html).
-
-*** Linking continued
 
 When we provide multiple source files, each is compiled to an object file, and these are linked to form the final executable:
 

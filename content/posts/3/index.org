@@ -22,7 +22,7 @@ The way in which you do so varies from tool to tool.
 
 Because the needs of each build system or IDE are so similar, you can use a tool called CMake to capture the above information in a text file, and generate project files for many different tools from that.
 
-Given our simple SDL example from the last post. A minimal CMakeLists.txt file would look like:
+Given our simple SDL example from the last post. A minimal ~CMakeLists.txt~ file would look like:
 
 #+begin_src cmake :tangle .generated/CMakeLists.txt
 # Specify minimum CMake version
