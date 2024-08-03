@@ -2,6 +2,7 @@
 #+OPTIONS: d:t
 
 #+BEGIN_SRC emacs-lisp :exports results :results silent
+  (direnv-allow)
   (direnv-update-environment)
   (org-babel-tangle)
 #+END_SRC
