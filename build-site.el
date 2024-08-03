@@ -12,6 +12,8 @@
 
 ;; Install dependencies
 (package-install 'htmlize)
+(package-install 'ob-mermaid)
+(package-install 'direnv)
 
 ;; Load the publishing system
 (require 'ox-publish)

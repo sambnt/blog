@@ -23,7 +23,7 @@ There are two stages at which we need to help the compiler find files:
 Consider a simple SDL program:
 
 #+NAME: sdl-c
-#+BEGIN_SRC c :tangle sdl.c :dir .generated
+#+BEGIN_SRC c :tangle .generated/sdl.c
 #include <SDL2/SDL.h>
 
 int main(int argc, char *argv[])
